@@ -1,0 +1,41 @@
+[package]
+name = "fastmeta"
+version = "0.1.0"
+edition = "2021"
+description = "Fast, consistent website metadata retrieval and extraction"
+license = "GPL-2.0-or-later"
+repository = "https://github.com/nixietab/fastmeta"
+homepage = "https://github.com/nixietab/fastmeta"
+readme = "README.md"
+keywords = ["html", "metadata", "opengraph", "scraper", "cli"]
+categories = ["command-line-utilities", "web-programming"]
+
+[lib]
+name = "fastmeta"
+path = "src/lib.rs"
+
+[[bin]]
+name = "fastmeta"
+path = "src/main.rs"
+
+[dependencies]
+tokio           = { version = "1.40", features = ["rt", "rt-multi-thread", "macros", "net", "io-util", "time"] }
+hyper           = { version = "1.4",  features = ["client", "http1", "http2"] }
+hyper-util      = { version = "0.1",  features = ["client", "client-legacy", "http1", "http2", "tokio"] }
+hyper-rustls    = { version = "0.27", default-features = false, features = ["http1", "http2", "ring", "webpki-roots", "tls12"] }
+rustls          = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+http-body-util  = "0.1"
+bytes           = "1"
+serde           = { version = "1", features = ["derive"] }
+serde_json      = "1"
+flate2          = { version = "1", default-features = false, features = ["zlib-rs"] }
+memchr          = "2"
+url             = "2"
+anyhow          = "1"
+
+[profile.release]
+opt-level     = 3
+lto           = "fat"
+codegen-units = 1
+strip         = true
+panic         = "abort"
