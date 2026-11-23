@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use serde::Serialize;
 
@@ -20,12 +20,12 @@ pub struct Metadata {
     pub charset: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub favicon: Option<String>,
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub meta: HashMap<String, String>,
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub og: HashMap<String, String>,
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
-    pub twitter: HashMap<String, String>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub meta: BTreeMap<String, String>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub og: BTreeMap<String, String>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub twitter: BTreeMap<String, String>,
 }
 
 fn is_ws(b: u8) -> bool {

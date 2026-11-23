@@ -20,7 +20,8 @@ Options:
   -V, --version  Print the version
 
 Output:
-  One JSON object per input URL, in argument order. Errors go to stderr.
+  One JSON object per input URL, in argument order. A URL that could not be
+  fetched yields {\"url\", \"error\"}; details also go to stderr.
   The process exits non-zero if any URL could not be fetched.
 ";
 
@@ -30,6 +31,16 @@ fn normalize_url(input: &str) -> String {
     } else {
         format!("https://{input}")
     }
+}
+
+fn error_line(url: &str, msg: &str, pretty: bool) -> String {
+    let v = serde_json::json!({ "url": url, "error": msg });
+    let r = if pretty {
+        serde_json::to_string_pretty(&v)
+    } else {
+        serde_json::to_string(&v)
+    };
+    r.unwrap_or_default()
 }
 
 #[tokio::main(flavor = "current_thread")]
@@ -94,9 +105,8 @@ async fn main() -> ExitCode {
     let stdout = io::stdout();
     let mut out = stdout.lock();
 
-    for slot in results.into_iter().flatten() {
-        let (url, res) = slot;
-        match res {
+    for (url, res) in results.into_iter().flatten() {
+        let line = match res {
             Ok(md) => {
                 let s = if pretty {
                     serde_json::to_string_pretty(&md)
@@ -104,26 +114,28 @@ async fn main() -> ExitCode {
                     serde_json::to_string(&md)
                 };
                 match s {
-                    Ok(s) => {
-                        if let Err(e) = writeln!(out, "{s}") {
-                            if e.kind() == io::ErrorKind::BrokenPipe {
-                                return ExitCode::SUCCESS;
-                            }
-                            eprintln!("write error: {e}");
-                            any_err = true;
-                            break;
-                        }
-                    }
+                    Ok(s) => s,
                     Err(e) => {
-                        eprintln!("serialize error: {e}");
+                        eprintln!("serialize error for {url}: {e}");
                         any_err = true;
+                        error_line(&url, &format!("serialize error: {e}"), pretty)
                     }
                 }
             }
             Err(e) => {
                 eprintln!("error fetching {url}: {e}");
                 any_err = true;
+                error_line(&url, &format!("{e:#}"), pretty)
             }
+        };
+
+        if let Err(e) = writeln!(out, "{line}") {
+            if e.kind() == io::ErrorKind::BrokenPipe {
+                return ExitCode::SUCCESS;
+            }
+            eprintln!("write error: {e}");
+            any_err = true;
+            break;
         }
     }
 
@@ -144,6 +156,14 @@ mod tests {
         assert_eq!(
             normalize_url("example.com/path?q=1"),
             "https://example.com/path?q=1"
+        );
+    }
+
+    #[test]
+    fn error_line_shape() {
+        assert_eq!(
+            super::error_line("https://x/", "boom", false),
+            r#"{"error":"boom","url":"https://x/"}"#
         );
     }
 

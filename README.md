@@ -26,7 +26,7 @@ A bare host is treated as `https://<host>`. Multiple URLs are fetched concurrent
 
 ## Output
 
-Each URL produces one JSON object. Fields that are absent from the page are omitted; `url` and `status` are always present.
+Each URL produces one JSON object. Fields that are absent from the page are omitted; `url` and `status` are always present. A URL that could not be fetched produces `{"url": ..., "error": ...}`
 
 | Field         | Description                                                                 |
 | ------------- | --------------------------------------------------------------------------- |
